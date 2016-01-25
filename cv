@@ -1,0 +1,64 @@
+
+
+from sklearn.cross_validation import KFold
+from sklearn import metrics
+import numpy as np
+
+
+# CV Cross validation
+def cvprediction(xgbC,DEVELOP,n_folds, clfs, X,Y, testX):
+  if (DEVELOP):
+        # The DEV SET will be used for all training and validation purposes
+        # The TEST SET will never be used for training, it is the unseen set.
+        dev_cutoff = int(round(len(Y) * 4/5))
+        X_dev = X[:dev_cutoff]
+        Y_dev = Y[:dev_cutoff]
+        X_test = X[dev_cutoff:]
+        Y_test = Y[dev_cutoff:]
+  else:    # else submit
+        X_dev = X
+        Y_dev = Y
+        X_test = testX
+        Y_test=0
+        
+  kf = KFold(n=X_dev.shape[0], n_folds=n_folds)
+  
+  blend_train = np.zeros((X_dev.shape[0], (len(clfs)+1)))
+  blend_test = np.zeros((X_test.shape[0], (len(clfs)+1)))
+  cv_results = np.zeros(((len(clfs)+1), len(kf)))
+
+  cv_mse=np.zeros(((len(clfs)+1), len(kf)))
+  
+  for j, clf in enumerate(clfs):
+    blend_test_j = np.zeros((X_test.shape[0], len(kf)))
+    for i, (train_index, test_index) in enumerate(kf):
+             X_train = X_dev[train_index]
+             Y_train = Y_dev[train_index]
+             X_cv = X_dev[test_index]
+             Y_cv = Y_dev[test_index]
+             clf.fit(X_train, Y_train)
+             
+             blend_train[test_index, j] = clf.predict(X_cv)
+             cv_results[j,i] = normalized_gini(Y_cv, blend_train[test_index, j])
+             cv_mse[j,i]= metrics.mean_absolute_error(Y_cv, blend_train[test_index, j])
+             blend_test_j[:, i] = clf.predict(X_test)
+    blend_test[:, j] = np.mean(blend_test_j, axis=1)
+  
+    
+  if (xgbC):  
+      blend_test_xgb = np.zeros((X_test.shape[0], len(kf)))
+      for i, (train_index, test_index) in enumerate(kf):
+          X_train = X_dev[train_index]
+          Y_train = Y_dev[train_index]
+          X_cv = X_dev[test_index]
+          Y_cv = Y_dev[test_index]
+          blend_train[:,(len(clf)+1)]=xgboost_pred(X_train,Y_train,X_cv)
+          cv_results[(len(clf)+1),i] = normalized_gini(Y_cv, blend_train[test_index, (len(clf)+1)])
+          cv_mse[(len(clf)+1),i]= metrics.mean_absolute_error(Y_cv, blend_train[test_index, (len(clf)+1)])
+          blend_test_xgb[:, i] = xgboost_pred(X_train,Y_train,X_test)
+      blend_test[:, (len(clf)+1)] = np.mean(blend_test_xgb, axis=1)
+  
+  return X_dev,Y_dev, X_test, Y_test,blend_train, blend_test, cv_results, cv_mse
+
+      
+
