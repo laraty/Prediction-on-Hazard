@@ -1,0 +1,66 @@
+# the Stanard Variance of most column is small<1, 
+# the type of the variables are unknows, but seems to be categorical
+# normalize only the variables with sd>1.
+
+
+
+# Normalization
+from sklearn.preprocessing import normalize
+def normalization(X):
+  sdX=X.std(axis=0)
+  X[:,sdX>1]= normalize(X[:,sdX>1], axis=0)
+  
+  return X
+
+
+# Encoding done in preparedata.py
+
+# detect features by the p-value of GLM
+import statsmodels.api as sm
+import numpy as np
+est = sm.OLS(X[:,2], X1).fit()
+est.summary()
+
+
+###############################################################################
+
+from sklearn.decomposition import PCA
+from sklearn.lda import LDA
+from sklearn.cross_decomposition import CCA
+
+
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+
+# define two outlier detection tools to be compared 1st75%, 2ed 7.5%
+pca = PCA(n_components=10).fit(X)
+X1=pca.fit_transform(X_dev)
+Y1 = PCA(n_components=10).fit(X).predict(X_dev)
+normalized_gini(Y1, Y_dev)
+
+
+from sklearn.linear_model import SGDClassifier
+clf = SGDClassifier()
+clf.fit(X1, Y_dev, class_weight= )
+
+
+
+
+
+Gini(Y1,Y)
+
+
+lda = LDA(n_components=10).fit(X, Y)
+X2 = lda.transform(X)
+Y2 = lda.predict(X)
+Gini(Y2,Y)
+
+cca = CCA(n_components=1).fit(X,Y)
+X3, Y3 = cca.transform(X, Y)
+Gini(Y3,Y)
+    
+    
+plt.figure()  
+for i in range(10):
+   plt.scatter(X2[:, i], Y)
+plt.show()
