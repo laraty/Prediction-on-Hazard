@@ -39,28 +39,3 @@ Y1 = PCA(n_components=10).fit(X).predict(X_dev)
 normalized_gini(Y1, Y_dev)
 
 
-from sklearn.linear_model import SGDClassifier
-clf = SGDClassifier()
-clf.fit(X1, Y_dev, class_weight= )
-
-
-
-
-
-Gini(Y1,Y)
-
-
-lda = LDA(n_components=10).fit(X, Y)
-X2 = lda.transform(X)
-Y2 = lda.predict(X)
-Gini(Y2,Y)
-
-cca = CCA(n_components=1).fit(X,Y)
-X3, Y3 = cca.transform(X, Y)
-Gini(Y3,Y)
-    
-    
-plt.figure()  
-for i in range(10):
-   plt.scatter(X2[:, i], Y)
-plt.show()
